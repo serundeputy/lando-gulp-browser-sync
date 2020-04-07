@@ -1,56 +1,33 @@
-# Change this name to something that makes sense for your project
-name: infiniteawesome
-
-# Use the recipe appropriate for your application.
+name: gulp-bs
 recipe: drupal8
 
-# Configure the D8 recipe to match up closer to a vanilla platform.sh stack
+proxy:
+  node:
+    - bs.gulp-bs.lndo.site:3000
+
 config:
-
-  # Lando defaults to Apache. Switch to nginx to match Platform.sh.
   via: nginx
-
-  # Set the webroot to match your .platform.app.yaml.
   webroot: web
+  php: 7.3
+  database: mariadb:10.3
 
-  # Set this to match the version in your .platform.app.yaml.
-  php: 7.1
-
-  # Lando defaults to the latest MySQL release, but Platform.sh uses MariaDB.
-  # Specify the version to match what's in services.yaml.
-  database: mariadb:10.1
-
-# The following additional build step will install the Platform CLI
-# in the application container and auto-run `composer install`
 services:
   appserver:
     run:
-      - "mkdir -p /var/www/.platformsh && mkdir -p /var/www/.platformsh/bin"
-      - "curl -fsSL -o /var/www/.platformsh/bin/platform https://github.com/platformsh/platformsh-cli/releases/download/v3.36.0/platform.phar"
-      - "chmod ug+x /var/www/.platformsh/bin/platform"
       - "cd $LANDO_MOUNT && composer install"
-    overrides:
-      services:
-        environment:
-          BEHAT_PARAMS: '{"extensions" : {"Behat\\MinkExtension" : {"base_url" : "http://nginx/"}, "Drupal\\DrupalExtension" : {"drush" :   {  "root":  "/app/web" }}}}'
+  node:
+    type: node:12
+    run:
+      - cd /app/web/themes/contrib/bootstrap_sass && yarn
+    command: cd /app/web/themes/contrib/bootstrap_sass && node_modules/.bin/gulp serve 
 
-# The following entry creates a `lando platform` command that will run
-# any Platform CLI command from inside the container if desired.
 tooling:
-  platform:
-    service: appserver
-    description: Run Platform CLI commands
-    cmd: /var/www/.platformsh/bin/platform
-  phplint:
-    service: appserver
-    cmd: /app/vendor/bin/phplint
-  phpcs:
-    service: appserver
-    cmd: /app/vendor/bin/phpcs
-  phpunit:
-    service: appserver
-    cmd: /app/vendor/bin/phpunit
-  behat:
-    service: appserver
-    cmd: /app/vendor/bin/behat
-
+  node:
+    service: node
+    cmd: node
+  yarn:
+    service: node
+    cmd: yarn
+  gulp:
+    service: node
+    cmd: gulp
